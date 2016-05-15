@@ -8,22 +8,24 @@
 this["Handlebars"]["templates"] = this["Handlebars"]["templates"] || {};
 this["Handlebars"]["templates"]["apikey_auth"] = Handlebars.template({"1":function(depth0,helpers,partials,data) {
   var helper, functionType="function", helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression;
-  return "                <span class=\"key_auth__value\">"
+  return "            <div class=\"key_auth__field\">\n                <span class=\"key_auth__label\">JWT:</span>\n                <span class=\"key_auth__value\">"
     + escapeExpression(((helper = (helper = helpers.value || (depth0 != null ? depth0.value : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"value","hash":{},"data":data}) : helper)))
-    + "</span>\n";
+    + "</span>\n            </div>\n";
 },"3":function(depth0,helpers,partials,data) {
-  return "                <input placeholder=\"api_key\" class=\"auth_input input_apiKey_entry\" name=\"apiKey\" type=\"text\"/>\n";
+  return "            <div class=\"key_auth__field\">\n                <span class=\"key_auth__label\">Username:</span>\n                <input placeholder=\"username\" class=\"auth_input input_apiKey_username\" name=\"username\" type=\"text\" />\n            </div>\n            <div class=\"key_auth__field\">\n                <span class=\"key_auth__label\">Password:</span>\n                <input placeholder=\"password\" class=\"auth_input input_apiKey_password\" name=\"password\" type=\"text\" />\n            </div>\n";
   },"compiler":[6,">= 2.0.0-beta.1"],"main":function(depth0,helpers,partials,data) {
-  var stack1, helper, functionType="function", helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression, buffer = "<div class=\"key_input_container\">\n    <h3 class=\"auth__title\">Api key authorization</h3>\n    <div class=\"auth__description\">"
+  var stack1, helper, functionType="function", helperMissing=helpers.helperMissing, escapeExpression=this.escapeExpression, buffer = "<div class=\"key_input_container\">\n    <h3 class=\"auth__title\">JWT authorization</h3>\n    <p>Username/password is sent to "
+    + escapeExpression(((helper = (helper = helpers.authorizationUrl || (depth0 != null ? depth0.authorizationUrl : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"authorizationUrl","hash":{},"data":data}) : helper)))
+    + " which in turn will respond with a valid token on success.</p>\n    <div class=\"auth__description\">"
     + escapeExpression(((helper = (helper = helpers.description || (depth0 != null ? depth0.description : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"description","hash":{},"data":data}) : helper)))
     + "</div>\n    <div>\n        <div class=\"key_auth__field\">\n            <span class=\"key_auth__label\">name:</span>\n            <span class=\"key_auth__value\">"
     + escapeExpression(((helper = (helper = helpers.name || (depth0 != null ? depth0.name : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"name","hash":{},"data":data}) : helper)))
     + "</span>\n        </div>\n        <div class=\"key_auth__field\">\n            <span class=\"key_auth__label\">in:</span>\n            <span class=\"key_auth__value\">"
     + escapeExpression(((helper = (helper = helpers['in'] || (depth0 != null ? depth0['in'] : depth0)) != null ? helper : helperMissing),(typeof helper === functionType ? helper.call(depth0, {"name":"in","hash":{},"data":data}) : helper)))
-    + "</span>\n        </div>\n        <div class=\"key_auth__field\">\n            <span class=\"key_auth__label\">value:</span>\n";
+    + "</span>\n        </div>\n\n";
   stack1 = helpers['if'].call(depth0, (depth0 != null ? depth0.isLogout : depth0), {"name":"if","hash":{},"fn":this.program(1, data),"inverse":this.program(3, data),"data":data});
   if (stack1 != null) { buffer += stack1; }
-  return buffer + "        </div>\n    </div>\n</div>\n";
+  return buffer + "    </div>\n</div>\n";
 },"useData":true});
 this["Handlebars"]["templates"]["auth_button_operation"] = Handlebars.template({"1":function(depth0,helpers,partials,data) {
   return "        authorize__btn_operation_login\n";
@@ -19250,8 +19252,11 @@ SwaggerUi.Models.ApiKeyAuthModel = Backbone.Model.extend({
     defaults: {
         'in': '',
         name: '',
-        title: '',
-        value: ''
+        title: 'JsonWebToken',
+        value: '',
+        username: '',
+        password: '',
+        authorizationUrl: ''
     },
 
     initialize: function () {
@@ -19259,7 +19264,7 @@ SwaggerUi.Models.ApiKeyAuthModel = Backbone.Model.extend({
     },
 
     validate: function () {
-        var valid = !!this.get('value');
+        var valid = !!this.get('password') && !!this.get('username');
 
         this.set('valid', valid);
 
@@ -19271,11 +19276,16 @@ SwaggerUi.Models.ApiKeyAuthModel = Backbone.Model.extend({
 SwaggerUi.Views.ApiKeyAuthView = Backbone.View.extend({ // TODO: append this to global SwaggerUi
 
     events: {
-        'change .input_apiKey_entry': 'apiKeyChange'
+        'change .auth_input': 'inputChange'
     },
 
     selectors: {
-        apikeyInput: '.input_apiKey_entry'
+        usernameInput: '.input_apiKey_username',
+        passwordInput: '.input_apiKey_password'
+    },
+
+    cls: {
+        error: 'error'
     },
 
     template: Handlebars.templates.apikey_auth,
@@ -19291,13 +19301,16 @@ SwaggerUi.Views.ApiKeyAuthView = Backbone.View.extend({ // TODO: append this to 
         return this;
     },
 
-    apiKeyChange: function (e) {
-        var val = $(e.target).val();
+    inputChange: function (e) {
+        var $el = $(e.target);
+        var val = $el.val();
+        var attr = $el.prop('name');
+
         if (val) {
-            this.$(this.selectors.apikeyInput).removeClass('error');
+            $el.removeClass(this.cls.error);
         }
 
-        this.model.set('value', val);
+        this.model.set(attr, val);
     },
 
     isValid: function () {
@@ -19305,8 +19318,12 @@ SwaggerUi.Views.ApiKeyAuthView = Backbone.View.extend({ // TODO: append this to 
     },
 
     highlightInvalid: function () {
-        if (!this.isValid()) {
-            this.$(this.selectors.apikeyInput).addClass('error');
+        if (!this.model.get('username')) {
+            this.$(this.selectors.usernameInput).addClass(this.cls.error);
+        }
+
+        if (!this.model.get('password')) {
+            this.$(this.selectors.passwordInput).addClass(this.cls.error);
         }
     }
 
@@ -19463,6 +19480,7 @@ SwaggerUi.Collections.AuthsCollection = Backbone.Collection.extend({
                 });
             }
 
+            console.log(auth);
             return auth;
         });
     }
@@ -19585,13 +19603,27 @@ SwaggerUi.Views.AuthView = Backbone.View.extend({
             var type = auth.get('type');
 
             if (type === 'apiKey') {
-                keyAuth = new SwaggerClient.ApiKeyAuthorization(
-                    auth.get('name'),
-                    auth.get('value'),
-                    auth.get('in')
-                );
+                var that = this;
+                $.ajax({
+                    type: 'POST',
+                    url: auth.get('authorizationUrl'),
+                    data: {
+                        email: auth.get('username'),
+                        password: auth.get('password')
+                    },
+                    success: function(data) {
+                        auth.set('value', data.token);
+                        keyAuth = new SwaggerClient.ApiKeyAuthorization(
+                            auth.get('name'),
+                            'Bearer ' + auth.get('value'),
+                            auth.get('in')
+                        );
 
-                this.router.api.clientAuthorizations.add(auth.get('title'), keyAuth);
+                        that.router.api.clientAuthorizations.add(auth.get('title'), keyAuth);
+                    },
+                    dataType: 'json',
+                    async: false
+                });
             } else if (type === 'basic') {
                 basicAuth = new SwaggerClient.PasswordAuthorization(auth.get('username'), auth.get('password'));
                 this.router.api.clientAuthorizations.add(auth.get('type'), basicAuth);
