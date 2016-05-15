@@ -1,4 +1,4 @@
-<?php namespace Jlapp\Swaggervel;
+<?php namespace larsboldt\Swaggervel;
 
 use Illuminate\Support\ServiceProvider;
 
