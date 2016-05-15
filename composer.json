@@ -16,7 +16,7 @@
     },
     "autoload": {
         "psr-0": {
-            "larsboldt\\Swaggervel": "src/"
+            "Jlapp\\Swaggervel": "src/"
         }
     },
     "minimum-stability": "stable"
